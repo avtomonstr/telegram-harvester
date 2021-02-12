@@ -2,26 +2,43 @@ from telethon import TelegramClient, events, utils
 from telethon.tl.types import PeerChannel
 import json
 import os
+import configparser
 
-api_id = # получить на my.telegram.org
-api_hash = # получить на my.telegram.org
-phone = '+38093#######'
+# reading config from config.ini file
+config = configparser.ConfigParser(allow_no_value=True)
+config.optionxform=str
+config.read('config.ini')
 
+source_channels = []
+recipients_channels = []
+
+for item in config['Source']:
+    source_channels.append(str(item))
+
+for item in config['Recipients']:
+    recipients_channels.append(str(item))
+
+api_id = config['Default']['api_id'] 
+api_hash = config['Default']['api_hash']
+phone = config['Default']['phone']
+
+
+#client instance creation
 client = TelegramClient(phone, api_id, api_hash)
 
-source_channel_peer_name = 'Test-telethon-channel'
-recievers = ['igorkauf','avtomonstr']
-
-
+# handling all events
 @client.on(events.NewMessage(outgoing=False))
 async def handler(event):
+    # get event source name
     entity = await client.get_entity(event.message.to_dict()['peer_id']['channel_id'])
-    if json.loads(entity.to_json())['title'] == source_channel_peer_name:
+    if json.loads(entity.to_json())['title'] in source_channels:
         print(event.message.to_dict()['message'])
         result = await client.download_media(event.message.media)
-        print(result)
-        for reciever in recievers:
-            await client.send_message(reciever, event.message.to_dict()['message'], file=result)
+        for recipient in recipients_channels:
+            # get reciepient peer
+            entity = await  client.get_entity(recipient)
+            # send
+            await client.send_message(entity, message=event.message.to_dict()['message'], file=result)
 
 client.start()
 
