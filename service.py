@@ -26,19 +26,23 @@ phone = config['Default']['phone']
 #client instance creation
 client = TelegramClient(phone, api_id, api_hash)
 
+messageText = ''
+
 # handling all events
 @client.on(events.NewMessage(outgoing=False))
 async def handler(event):
     # get event source name
     entity = await client.get_entity(event.message.to_dict()['peer_id']['channel_id'])
     if json.loads(entity.to_json())['title'] in source_channels:
-        print(event.message.to_dict()['message'])
+        print(event.message.to_dict()['message'])        
         result = await client.download_media(event.message.media)
-        for recipient in recipients_channels:
-            # get reciepient peer
-            entity = await  client.get_entity(recipient)
-            # send
-            await client.send_message(entity, message=event.message.to_dict()['message'], file=result)
+        if messageText != event.message.to_dict()['message']:
+            for recipient in recipients_channels:
+                # get reciepient peer
+                entity = await  client.get_entity(recipient)
+                # send
+                await client.send_message(entity, message=event.message.to_dict()['message'], file=result)
+            messageText = event.message.to_dict()['message']
 
 client.start()
 
