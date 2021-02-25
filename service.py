@@ -34,7 +34,8 @@ async def handler(event):
     # get event source name
     entity = await client.get_entity(event.message.to_dict()['peer_id']['channel_id'])
     if json.loads(entity.to_json())['title'] in source_channels:
-        print(event.message.to_dict()['message'])        
+        print(event.message.to_dict()['message'])
+        print(messageText)  
         result = await client.download_media(event.message.media)
         if messageText != event.message.to_dict()['message']:
             for recipient in recipients_channels:
